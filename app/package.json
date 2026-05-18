@@ -1,0 +1,17 @@
+{
+  "name": "hpa-demo-app",
+  "version": "1.0.0",
+  "description": "Sample web app for Kubernetes Horizontal Pod Autoscaler demo",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "author": "Lord Jeff",
+  "license": "MIT"
+}

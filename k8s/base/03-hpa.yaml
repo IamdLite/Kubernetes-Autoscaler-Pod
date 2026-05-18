@@ -1,0 +1,61 @@
+# Horizontal Pod Autoscaler (HPA) for the demo app.
+#
+# This uses the autoscaling/v2 API, which supports multiple metrics
+# (CPU + memory) and the `behavior` block for fine-tuning scale speed.
+#
+# Scaling logic in plain words:
+#   - Keep average CPU utilization across all pods ≈ 50% of the request
+#   - Keep average memory utilization across all pods ≈ 70% of the request
+#   - HPA evaluates BOTH metrics each tick and scales to whichever
+#     count is higher. (It never picks the lower one — fail-safe up.)
+#
+# minReplicas / maxReplicas bound the autoscaler so it can't scale
+# to zero or explode and exhaust the cluster.
+#
+# The `behavior` section makes scale-up snappy (double in 60s, up to
+# 4 pods at a time) but scale-down conservative (stabilize for 5 min)
+# to avoid flapping when load is bursty.
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa-demo-app
+  namespace: hpa-demo
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: hpa-demo-app
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 70
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies:
+        - type: Percent
+          value: 100     # may double the number of pods...
+          periodSeconds: 60
+        - type: Pods
+          value: 4       # ...but never add more than 4 pods per minute
+          periodSeconds: 60
+      selectPolicy: Max
+    scaleDown:
+      stabilizationWindowSeconds: 300  # wait 5 min of low load before scaling down
+      policies:
+        - type: Percent
+          value: 50      # at most halve the pod count per minute
+          periodSeconds: 60
+      selectPolicy: Max

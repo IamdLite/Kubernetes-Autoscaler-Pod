@@ -1,0 +1,27 @@
+# Service exposes the deployment internally to the cluster.
+# Type ClusterIP is sufficient for our load test (which runs inside the
+# cluster as a Job).
+#
+# For external access during demo:
+#   - On minikube:  `minikube service hpa-demo-app -n hpa-demo`
+#   - On any cluster:  `kubectl -n hpa-demo port-forward svc/hpa-demo-app 8080:80`
+#
+# Change `type: ClusterIP` to `LoadBalancer` if you're on a cloud
+# cluster (EKS/GKE/AKS) and want a real external IP.
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: hpa-demo-app
+  namespace: hpa-demo
+  labels:
+    app: hpa-demo-app
+spec:
+  type: ClusterIP
+  selector:
+    app: hpa-demo-app
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP

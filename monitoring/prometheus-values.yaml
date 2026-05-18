@@ -1,0 +1,40 @@
+# Helm values for kube-prometheus-stack.
+# Lean defaults that fit on a 4–8 GB lab cluster.
+#
+# Install with:
+#   helm install monitoring prometheus-community/kube-prometheus-stack \
+#     --namespace monitoring --create-namespace \
+#     --values monitoring/prometheus-values.yaml
+
+grafana:
+  enabled: true
+  adminPassword: admin-demo-password
+  service:
+    type: ClusterIP
+  defaultDashboardsEnabled: true
+  # Auto-load the HPA dashboard from a ConfigMap if you create one
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+
+prometheus:
+  prometheusSpec:
+    retention: 24h
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: 1
+        memory: 1Gi
+    storageSpec: {}  # use emptyDir for the demo; swap in a PVC for real use
+
+alertmanager:
+  enabled: false   # not needed for the demo
+
+# Keep node-exporter & kube-state-metrics on (they feed our dashboard)
+nodeExporter:
+  enabled: true
+kubeStateMetrics:
+  enabled: true

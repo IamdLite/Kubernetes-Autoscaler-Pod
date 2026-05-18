@@ -1,0 +1,81 @@
+# k6-based load test, run as a Kubernetes Job.
+#
+# This is a more realistic load test than the busybox while-loop:
+#   - Ramps up to 100 virtual users over 1 minute
+#   - Holds 100 VUs for 5 minutes (this is where HPA should kick in)
+#   - Ramps down over 1 minute
+#
+# It calls /cpu so the HPA scales on CPU. To test memory-driven scaling,
+# change the path in the script to /memory.
+#
+# Apply with:  kubectl apply -f load-test/k6-load-test.yaml
+# Watch:       kubectl -n hpa-demo logs -f job/k6-load-test
+# Cleanup:     kubectl -n hpa-demo delete job k6-load-test
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: k6-script
+  namespace: hpa-demo
+data:
+  load.js: |
+    import http from 'k6/http';
+    import { check, sleep } from 'k6';
+
+    export const options = {
+      stages: [
+        { duration: '1m', target: 100 },   // ramp up to 100 VUs
+        { duration: '5m', target: 100 },   // sustain — HPA should scale here
+        { duration: '1m', target: 0 },     // ramp down
+      ],
+      thresholds: {
+        http_req_failed:   ['rate<0.05'],   // <5% errors
+        http_req_duration: ['p(95)<2000'],  // 95% of requests under 2s
+      },
+    };
+
+    const TARGET = __ENV.TARGET || 'http://hpa-demo-app.hpa-demo.svc.cluster.local';
+
+    export default function () {
+      const res = http.get(`${TARGET}/cpu?n=30`);
+      check(res, {
+        'status is 200': (r) => r.status === 200,
+      });
+      sleep(0.1);
+    }
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: k6-load-test
+  namespace: hpa-demo
+spec:
+  backoffLimit: 1
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        app: k6-load-test
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: k6
+          image: grafana/k6:0.49.0
+          command: ["k6", "run", "/scripts/load.js"]
+          env:
+            - name: TARGET
+              value: http://hpa-demo-app.hpa-demo.svc.cluster.local
+          volumeMounts:
+            - name: script
+              mountPath: /scripts
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "1"
+              memory: "512Mi"
+      volumes:
+        - name: script
+          configMap:
+            name: k6-script

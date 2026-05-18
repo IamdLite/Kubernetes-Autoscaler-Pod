@@ -1,0 +1,9 @@
+# Dedicated namespace keeps the demo isolated from default workloads.
+# Makes cleanup trivial: `kubectl delete ns hpa-demo` wipes everything.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hpa-demo
+  labels:
+    app.kubernetes.io/part-of: hpa-demo
+    purpose: autoscaling-coursework

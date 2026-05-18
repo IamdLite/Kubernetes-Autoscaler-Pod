@@ -1,0 +1,41 @@
+# Alternative load test using `hey` — a simpler HTTP benchmarker.
+#
+# Use this if you don't want the complexity of k6.
+#   - 50 concurrent workers
+#   - Runs for 5 minutes
+#   - Hits the /cpu endpoint
+#
+# Apply with:  kubectl apply -f load-test/hey-load-test.yaml
+# Watch:       kubectl -n hpa-demo logs -f job/hey-load-test
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hey-load-test
+  namespace: hpa-demo
+spec:
+  backoffLimit: 1
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        app: hey-load-test
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: hey
+          image: rcmorano/docker-hey:latest
+          # -z: duration, -c: concurrent workers, -q: requests/sec per worker (0 = no limit)
+          args:
+            - "-z"
+            - "5m"
+            - "-c"
+            - "50"
+            - "http://hpa-demo-app.hpa-demo.svc.cluster.local/cpu"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
