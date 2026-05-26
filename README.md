@@ -15,18 +15,19 @@ k8s-pod-autoscaler/
 │   ├── server.js                      <- /cpu and /memory load endpoints
 │   └── .dockerignore
 ├── k8s/
-    ├── base/                          <- core manifests, apply with `kubectl apply -k`
-    │   ├── 00-namespace.yaml
-    │   ├── 01-deployment.yaml         <- with resource requests (HPA needs these)
-    │   ├── 02-service.yaml
-    │   ├── 03-hpa.yaml                <- autoscaling/v2 — CPU + memory targets
-    │   └── kustomization.yaml
-    ├── metrics-server/                <- prerequisite for HPA on resource metrics
-        ├── README.md
-        └── components-patched.yaml    <- for kind/k3d/custom (--kubelet-insecure-tls)
+│   ├── base/                          <- core manifests, apply with `kubectl apply -k`
+│   │   ├── 00-namespace.yaml
+│   │   ├── 01-deployment.yaml         <- with resource requests (HPA needs these)
+│   │   ├── 02-service.yaml
+│   │   ├── 03-hpa.yaml                <- autoscaling/v2 — CPU + memory targets
+│   │   └── kustomization.yaml
+│   ├── metrics-server/                <- prerequisite for HPA on resource metrics
+│   │   ├── README.md
+│   │   └── components-patched.yaml    <- for kind/k3d/custom (--kubelet-insecure-tls)
+│   └── cluster-autoscaler/            <- node-level scaling
+└── results/                           <- captured logs land here
 
-
-utility/                               <- Not part of PoC
+utility/
 ├── load-test/
 │   ├── load-test-simple.sh            <- busybox while-loop (classic)
 │   ├── k6-load-test.yaml              <- 100 VUs, 7-min profile (recommended)
@@ -44,7 +45,7 @@ utility/                               <- Not part of PoC
 │   ├── setup.md                       <- step-by-step environment setup
 │   ├── testing.md                     <- the load-test playbook
 │   └── results-template.md            <- fill this in after the demo
-└── results/                           <- captured logs land here
+
 ```
 
 ## How the pieces fit together
