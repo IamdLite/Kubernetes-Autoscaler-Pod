@@ -27,7 +27,7 @@ k8s-pod-autoscaler/
 │   └── cluster-autoscaler/            <- node-level scaling
 └── results/                           <- captured logs land here
 
-utility/
+utility/                               <- NOT part of PoC
 ├── load-test/
 │   ├── load-test-simple.sh            <- busybox while-loop (classic)
 │   ├── k6-load-test.yaml              <- 100 VUs, 7-min profile (recommended)
@@ -42,9 +42,9 @@ utility/
 │   ├── cleanup.sh                     <- tear down
 │   └── watch.sh                       <- live HPA + pods view
 ├── docs/
-│   ├── setup.md                       <- step-by-step environment setup
-│   ├── testing.md                     <- the load-test playbook
-│   └── results-template.md            <- fill this in after the demo
+    ├── setup.md                       <- step-by-step environment setup
+    ├── testing.md                     <- the load-test playbook
+    └── results-template.md            <- fill this in after the demo
 
 ```
 
